@@ -1,15 +1,8 @@
-var inputTreeSize = document.getElementById("inputTreeSize");
-var btnGenWorld = document.getElementById("btnGenWorld");
-
-
-function resizeCanvas() {
+function resizeCanvas(canvas) {
     var parentWidth = canvas.parentElement.offsetWidth;
     canvas.width = parentWidth * 0.8;
     canvas.height = canvas.width * (canvas.offsetHeight / canvas.offsetWidth);
 }
-
-resizeCanvas();
-
 
 function draw(ctx, rule, size, startX, startY) {
     let angle = 0;
@@ -54,89 +47,52 @@ function draw(ctx, rule, size, startX, startY) {
     return { currX: currX, currY: currY, angle: angle };
 }
 
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const spreadProbabilityInput = document.getElementById('spreadProbability');
+const resetButton = document.getElementById('resetButton');
 
+const main = () => {
+    resizeCanvas(canvas);
 
-function genWorld(treeSize){
-      var canvas = document.getElementById("canvas");
-      var ctx = canvas.getContext('2d');
+    canvas.addEventListener('click', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        let x = event.clientX - rect.left;
+        let y = event.clientY - rect.top;
 
+        x = x - 5;
+        y = y - 5;
 
+        ctx.fillStyle = '#ff3300';
+        ctx.fillRect(x, y, 10, 10);
 
+        console.log('x=' + x + ', y=' + y);
 
-      var retPixX = treeSize * 1.5;
-      var retPixY = treeSize * 1.5;
+        let fire = new LSystem({  // rule
+            axiom: 'F',
+        });
 
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+        fire.setProduction('F', () => (Math.random() < spreadProbabilityInput.value ? 'FF+[+F-F-F]-[-F+F+F]+F[+F]F[-F]F' : ''));
 
-      for (var x = treeSize/2; x < canvas.width - treeSize/2; x+=retPixX) {
-            for(var y = treeSize/2; y < canvas.height - treeSize/2; y +=retPixY){
-                  ctx.fillStyle = '#008616';
-                  ctx.fillRect(x, y, treeSize, treeSize);
+        const size = 10;
+
+        let jj = 1;
+        function drawNextStep() {
+            if (jj <= 6) {
+                const rule = fire.iterate(1);
+                draw(ctx, rule, size, x, y);
+                console.log(rule);
+                jj++;
+                setTimeout(drawNextStep, 1000);
             }
+        }
 
-      }
+        drawNextStep();
+    });
 
-      console.log("W = " + canvas.width + " H = " + canvas.height);
-
-
-      canvas.addEventListener('click', function(event) {
-
-            var rect = canvas.getBoundingClientRect();
-            var x = event.clientX - rect.left;
-            var y = event.clientY - rect.top;
-
-            x = x - 5;
-            y = y - 5;
-
-            ctx.fillStyle = '#ff3300';
-            ctx.fillRect(x, y, 10, 10);
-
-            console.log('x=' + x + ', y=' + y);
-
-
-
-
-            let fire = new LSystem({  // rule
-                axiom: 'F',
-                //productions: {'F': 'FF+[+F-F-F]-[-F+F+F]'},
-                productions: {'F': 'FF+[+F-F-F]-[-F+F+F]+F[+F]F[-F]F'},
-            });
-
-            var size = 10;
-
-            var jj = 1;
-            function drawNextStep() {
-                  if (jj <= 8) {
-                      var rule = fire.iterate(1);
-                      draw(ctx, rule, size, x, y);
-                      console.log(rule);
-                      jj++;
-                      setTimeout(drawNextStep, 1000);
-                  }
-              }
-
-              drawNextStep();
-      });
+    resetButton.addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
 }
 
-
-
-
-btnGenWorld.addEventListener('click',function(event){
-      var treeSize = inputTreeSize.value;
-
-      if (treeSize === "" || parseInt(treeSize) <= 0) {
-          console.log('Error input <= 0');
-          return;
-      }
-
-
-      if (isNaN(treeSize)) {
-          console.log('Error NaN');
-          return;
-      }
-
-      console.log('Tree size:', treeSize);
-      genWorld(treeSize);
-});
+main();

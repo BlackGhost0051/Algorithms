@@ -72,13 +72,33 @@ const main = () => {
             axiom: 'F',
         });
 
-        fire.setProduction('F', () => (Math.random() < spreadProbabilityInput.value ? 'FF+[+F-F-F]-[-F+F+F]+F[+F]F[-F]F' : ''));
+        const productions = [
+            'FF+[+F-F-F]-[-F+F+F]+F[+F]F[-F]F',
+            'F[+F]F[-F]+F',
+            'F[-F][+F]F',
+            'F[-F+F+F]+F[+F]F'
+        ];
+
+        const successors = [];
+
+        productions.forEach((production) => {
+            successors.push({
+                weight: (spreadProbabilityInput.value * 100) / productions.length,
+                successor: production
+            });
+        });
+
+        console.log('successors', successors);
+
+        fire.setProduction('F', {
+            successors: successors
+        });
 
         const size = 10;
 
         let jj = 1;
         function drawNextStep() {
-            if (jj <= 6) {
+            if (jj <= 5) {
                 const rule = fire.iterate(1);
                 draw(ctx, rule, size, x, y);
                 console.log(rule);

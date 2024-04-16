@@ -29,17 +29,3 @@ input[type=number] {
     margin-bottom: 2ex;
     width: 90%;
 }
-
-h1{
-    margin-top: 1ex;
-}
-
-canvas {
-    width: 80%;
-    background: #000;
-}
-
-#pixi-container{
-    width: 80%;
-    background: #000;
-}

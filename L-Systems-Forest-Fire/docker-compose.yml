@@ -1,0 +1,11 @@
+services:
+  ff-bun:
+    container_name: ff-bun
+    build: ./docker/bun
+    volumes:
+      - ./:/home/bun/app
+    ports:
+      - "5173:5173"
+    command:
+      - /bin/bash
+    tty: true

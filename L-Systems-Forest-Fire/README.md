@@ -6,7 +6,7 @@
 ## Installation
 1. Setup containers
     ```bash
-    docker-compose up -d
+    docker compose up -d
     ```
 2. Install dependencies
     ```bash

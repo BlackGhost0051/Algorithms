@@ -30,3 +30,9 @@ body {
   align-items: center;
   width: 100%;
 }
+
+#windArrow {
+  filter: invert();
+  margin-left: 20px;
+  margin-top: 20px;
+}

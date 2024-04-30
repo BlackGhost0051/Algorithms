@@ -25,6 +25,15 @@ export class Flame {
         this.fuel = Math.random() * (Flame.MAXIMUM_FUEL - Flame.MINIMUM_FUEL) + Flame.MINIMUM_FUEL;
     }
 
+    public static changeWindAngle(): void {
+        if(Math.random() > 0.5) {
+            Flame.windAngle = (Flame.windAngle % 360) + 1;
+        }
+        else {
+            Flame.windAngle = (Flame.windAngle % 360) - 1;
+        }
+    }
+
     public burn(): void {
         if(this.fuel <= 0) {
             this.temperature--;
@@ -43,7 +52,6 @@ export class Flame {
             }
         }
     }
-
 
     public getFuelPercentage(): string {
         if(this.fuel <= 0) {

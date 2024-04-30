@@ -13,6 +13,7 @@ const app = new PIXI.Application();
 
 const main = () => {
     const startingFlame = new Flame();
+    startingFlame.temperature = Flame.MINIMUM_TEMPERATURE + 20;
     const flames = new Map<string, Flame>();
     flames.set(`${startingFlame.positionX},${startingFlame.positionY}`, startingFlame);
 
@@ -55,7 +56,7 @@ const renderStage = (flames: Map<string, Flame>) => {
     flames.forEach(flame => {
         const graphics = new PIXI.Graphics();
         graphics.rect(flame.positionX, flame.positionY, PIXEL_THICKNESS, PIXEL_THICKNESS);
-        graphics.fill(Flame.getTemperatureColor(flame.temperature));
+        graphics.fill(flame.getTemperatureColor(flame.temperature));
         app.stage.addChild(graphics);
     })
 }
@@ -67,7 +68,12 @@ const iterateFlames = (flames: Map<string, Flame>) => {
 
     flames.forEach(flame => {
         if(flame.temperature < Flame.MINIMUM_TEMPERATURE) {
-            flames.delete(`${flame.positionX},${flame.positionY}`);
+            if(flame.fuel <= 0) {
+                flame.dead = true;
+            }
+            else {
+                flames.delete(`${flame.positionX},${flame.positionY}`);
+            }
         }
         else {
             flame.burn();
@@ -84,7 +90,7 @@ const iterateFlames = (flames: Map<string, Flame>) => {
 
 const createFlameListItem = (flame: Flame) => {
     const listItem = document.createElement('li');
-    listItem.innerText = `(${flame.positionX}, ${flame.positionY}) ${flame.temperature} K`;
+    listItem.innerText = `(${flame.positionX}, ${flame.positionY}) ${flame.temperature} K ${flame.getFuelPercentage()}`;
     return listItem;
 }
 
@@ -113,6 +119,10 @@ const spreadFlame = (flames: Map<string, Flame>, flame: Flame): void => {
             case 'R':
                 newPositionX += PIXEL_THICKNESS;
                 break;
+        }
+
+        if(newPositionX < 0 || newPositionX >= STAGE_WIDTH || newPositionY < 0 || newPositionY >= STAGE_HEIGHT) {
+            continue;
         }
 
         if(isTileFree(flames, newPositionX, newPositionY)) {

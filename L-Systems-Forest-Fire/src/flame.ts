@@ -63,7 +63,7 @@ export class Flame {
 
     public getTemperatureColor(temperature: number): string {
         if(this.dead) {
-            return 'hsl(0, 0%, 0%)';
+            return 'hsl(0,0%,44%)';
         }
 
         const dividend = Flame.maxTemperature - Flame.MINIMUM_TEMPERATURE;

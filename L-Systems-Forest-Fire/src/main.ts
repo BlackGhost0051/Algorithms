@@ -1,14 +1,14 @@
 import './style.css'
 import * as PIXI from 'pixi.js'
-import {PIXEL_THICKNESS, STAGE_HEIGHT, STAGE_WIDTH} from "./constants.ts";
+import {PIXEL_THICKNESS, STAGE_HEIGHT, STAGE_WIDTH, ITERATION_TIMEOUT} from "./constants.ts";
 import {Flame} from "./flame.ts";
 
 const stageDiv = document.getElementById('stage')!;
 const startButton = document.getElementById('startButton')!;
 const stopButton = document.getElementById('stopButton')!;
-const resetButton = document.getElementById('resetButton')!;
 const flamesList = document.getElementById('flamesList')!;
 const windArrow = document.getElementById('windArrow')!;
+const maxTemp = document.getElementById('maxTemp')!;
 
 const app = new PIXI.Application();
 
@@ -18,6 +18,9 @@ const main = () => {
     const flames = new Map<string, Flame>();
     flames.set(`${startingFlame.positionX},${startingFlame.positionY}`, startingFlame);
 
+    // Set random wind direction
+    Flame.windAngle = Math.floor(Math.random() * 360);
+
     let stop: boolean = false;
 
     const onIteration = () => {
@@ -25,7 +28,7 @@ const main = () => {
         iterateFlames(flames);
 
         if(flames.size > 0 && !stop) {
-            setTimeout(onIteration, 100);
+            setTimeout(onIteration, ITERATION_TIMEOUT);
         }
     }
 
@@ -36,16 +39,6 @@ const main = () => {
 
     stopButton.addEventListener('click', () => {
         stop = true;
-    });
-
-    resetButton.addEventListener('click', () => {
-        stop = true;
-        flames.clear();
-        const startingFlame = new Flame();
-        flames.set(`${startingFlame.positionX},${startingFlame.positionY}`, startingFlame);
-        flamesList.innerHTML = '';
-        app.stage.removeChildren();
-        Flame.maxTemperature = Flame.MINIMUM_TEMPERATURE;
     });
 
     stageDiv.appendChild(app.canvas);
@@ -94,6 +87,8 @@ const iterateFlames = (flames: Map<string, Flame>) => {
             }
         }
     });
+
+    maxTemp.innerText = Flame.maxTemperature.toString() + ' K';
 }
 
 const createFlameListItem = (flame: Flame) => {

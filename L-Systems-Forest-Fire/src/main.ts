@@ -2,6 +2,14 @@ import './style.css'
 import * as PIXI from 'pixi.js'
 import {PIXEL_THICKNESS, STAGE_HEIGHT, STAGE_WIDTH, ITERATION_TIMEOUT} from "./constants.ts";
 import {Flame} from "./flame.ts";
+import {Assets, Container, Sprite} from "pixi.js";
+
+const assets = [
+    { alias: 'cloud', src: 'assets/cloud.png' }
+];
+
+let cloud: Sprite | null = null;
+let cloudAdded: boolean = false;
 
 const stageDiv = document.getElementById('stage')!;
 const startButton = document.getElementById('startButton')!;
@@ -11,8 +19,12 @@ const windArrow = document.getElementById('windArrow')!;
 const maxTemp = document.getElementById('maxTemp')!;
 
 const app = new PIXI.Application();
+const flamesContainer = new PIXI.Container();
+app.stage.addChild(flamesContainer);
 
-const main = () => {
+const main = async () => {
+    await Assets.load(assets);
+
     const startingFlame = new Flame();
     startingFlame.temperature = Flame.MINIMUM_TEMPERATURE + 20;
     const flames = new Map<string, Flame>();
@@ -27,7 +39,7 @@ const main = () => {
         renderStage(flames);
         iterateFlames(flames);
 
-        if(flames.size > 0 && !stop) {
+        if (flames.size > 0 && !stop) {
             setTimeout(onIteration, ITERATION_TIMEOUT);
         }
     }
@@ -45,14 +57,67 @@ const main = () => {
 }
 
 const renderStage = (flames: Map<string, Flame>) => {
-    app.stage.removeChildren();
+    flamesContainer.removeChildren();
 
     flames.forEach(flame => {
         const graphics = new PIXI.Graphics();
         graphics.rect(flame.positionX, flame.positionY, PIXEL_THICKNESS, PIXEL_THICKNESS);
         graphics.fill(flame.getTemperatureColor(flame.temperature));
-        app.stage.addChild(graphics);
+        flamesContainer.addChild(graphics);
     })
+
+    if(!cloudAdded) {
+        addCloud();
+        cloudAdded = true;
+    }
+
+    animateCloud();
+}
+
+const addCloud = () => {
+    const cloudContainer = new Container();
+    cloud = Sprite.from('cloud');
+
+    cloud.scale.set(0.2);
+    cloud.anchor.set(0.5);
+    cloud.x = STAGE_WIDTH / 2;
+    cloud.y = STAGE_HEIGHT / 2;
+    cloud.direction = Flame.windAngle;
+    cloud.speed = 10;
+    cloud.turnSpeed = Math.random() - 0.8;
+
+    cloudContainer.addChild(cloud);
+    app.stage.addChild(cloudContainer);
+}
+
+const animateCloud = () => {
+    if(cloud === null) {
+        return;
+    }
+
+    const stagePadding = 100;
+    const boundWidth = STAGE_WIDTH + stagePadding;
+    const boundHeight = STAGE_HEIGHT + stagePadding;
+
+    // Make the cloud move in the direction of wind angle
+    cloud.direction = Flame.windAngle * (Math.PI / 180); // Convert to radians
+    cloud.x += Math.cos(cloud.direction) * cloud.speed;
+    cloud.y += Math.sin(cloud.direction) * cloud.speed;
+
+    console.log('cloudPos', cloud.x, cloud.y, cloud.direction, cloud.speed, cloud.turnSpeed);
+
+    if(cloud.x < -stagePadding) {
+        cloud.x = boundWidth;
+    }
+    if(cloud.x > boundWidth) {
+        cloud.x = -stagePadding;
+    }
+    if(cloud.y < -stagePadding) {
+        cloud.y = boundHeight;
+    }
+    if(cloud.y > boundHeight) {
+        cloud.y = -stagePadding;
+    }
 }
 
 const setArrowAngle = (angle: number) => {
@@ -77,6 +142,7 @@ const iterateFlames = (flames: Map<string, Flame>) => {
             }
         }
         else {
+            flame.cloudCheck(cloud!);
             flame.burn();
 
             flamesList.appendChild(createFlameListItem(flame));
@@ -150,7 +216,7 @@ const getDirection = (windAngle: number): string => {
     // Sort the directions by weight
     const sortedDirections = Object.keys(directionsWithWeights).sort((a, b) => directionsWithWeights[a] - directionsWithWeights[b]);
 
-    console.log('weights', sortedDirections, directionsWithWeights);
+    // console.log('weights', sortedDirections, directionsWithWeights);
 
     // Pick a random direction based on the weights
     const random = Math.random();

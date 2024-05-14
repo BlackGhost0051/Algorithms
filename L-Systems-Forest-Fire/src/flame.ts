@@ -1,4 +1,5 @@
 import {PIXEL_THICKNESS, STAGE_HEIGHT, STAGE_WIDTH} from "./constants.ts";
+import {Sprite} from "pixi.js";
 
 export class Flame {
     public static readonly MINIMUM_TEMPERATURE = 900;
@@ -59,6 +60,12 @@ export class Flame {
         }
 
         return `${Math.floor(this.fuel * 100)}%`;
+    }
+
+    public cloudCheck(cloud: Sprite): void {
+        if(this.positionX >= cloud.x && this.positionX <= cloud.x + cloud.width && this.positionY >= cloud.y && this.positionY <= cloud.y + cloud.height) {
+            this.temperature = Flame.MINIMUM_TEMPERATURE;
+        }
     }
 
     public getTemperatureColor(temperature: number): string {

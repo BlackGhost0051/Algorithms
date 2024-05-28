@@ -8,7 +8,7 @@ const assets = [
     { alias: 'cloud', src: 'assets/cloud.png' }
 ];
 
-let cloud: Sprite | null = null;
+let clouds: Sprite[] = [];
 let cloudAdded: boolean = false;
 
 const stageDiv = document.getElementById('stage')!;
@@ -53,6 +53,13 @@ const main = async () => {
         stop = true;
     });
 
+    app.canvas.addEventListener('click', (event) => {
+        const canvasX = event.clientX - app.canvas.getBoundingClientRect().left;
+        const canvasY = event.clientY - app.canvas.getBoundingClientRect().top;
+
+        addCloud(canvasX, canvasY);
+    });
+
     stageDiv.appendChild(app.canvas);
 }
 
@@ -66,58 +73,43 @@ const renderStage = (flames: Map<string, Flame>) => {
         flamesContainer.addChild(graphics);
     })
 
-    if(!cloudAdded) {
-        addCloud();
-        cloudAdded = true;
-    }
-
-    animateCloud();
+    animateClouds();
 }
 
-const addCloud = () => {
+const addCloud = (x: number, y: number) => {
     const cloudContainer = new Container();
-    cloud = Sprite.from('cloud');
+    const cloud = Sprite.from('cloud');
 
     cloud.scale.set(0.2);
     cloud.anchor.set(0.5);
-    cloud.x = STAGE_WIDTH / 2;
-    cloud.y = STAGE_HEIGHT / 2;
+    cloud.x = x;
+    cloud.y = y;
     cloud.direction = Flame.windAngle;
     cloud.speed = 10;
     cloud.turnSpeed = Math.random() - 0.8;
 
     cloudContainer.addChild(cloud);
     app.stage.addChild(cloudContainer);
+
+    clouds.push(cloud);
 }
 
-const animateCloud = () => {
-    if(cloud === null) {
-        return;
-    }
+const animateClouds = () => {
+    clouds.forEach((cloud, index) => {
+        // Make the cloud move in the direction of wind angle
+        cloud.direction = Flame.windAngle * (Math.PI / 180); // Convert to radians
+        cloud.x += Math.cos(cloud.direction) * cloud.speed;
+        cloud.y += Math.sin(cloud.direction) * cloud.speed;
 
-    const stagePadding = 100;
-    const boundWidth = STAGE_WIDTH + stagePadding;
-    const boundHeight = STAGE_HEIGHT + stagePadding;
+        // Check if the cloud is off the screen
+        if(cloud.x < -100 || cloud.x > STAGE_WIDTH + 100 || cloud.y < -100 || cloud.y > STAGE_HEIGHT + 100) {
+            // Remove the cloud from the stage
+            app.stage.removeChild(cloud);
 
-    // Make the cloud move in the direction of wind angle
-    cloud.direction = Flame.windAngle * (Math.PI / 180); // Convert to radians
-    cloud.x += Math.cos(cloud.direction) * cloud.speed;
-    cloud.y += Math.sin(cloud.direction) * cloud.speed;
-
-    console.log('cloudPos', cloud.x, cloud.y, cloud.direction, cloud.speed, cloud.turnSpeed);
-
-    if(cloud.x < -stagePadding) {
-        cloud.x = boundWidth;
-    }
-    if(cloud.x > boundWidth) {
-        cloud.x = -stagePadding;
-    }
-    if(cloud.y < -stagePadding) {
-        cloud.y = boundHeight;
-    }
-    if(cloud.y > boundHeight) {
-        cloud.y = -stagePadding;
-    }
+            // Remove the cloud from the clouds array
+            clouds.splice(index, 1);
+        }
+    });
 }
 
 const setArrowAngle = (angle: number) => {
@@ -142,7 +134,9 @@ const iterateFlames = (flames: Map<string, Flame>) => {
             }
         }
         else {
-            flame.cloudCheck(cloud!);
+            clouds.forEach(cloud => {
+                flame.cloudCheck(cloud);
+            })
             flame.burn();
 
             flamesList.appendChild(createFlameListItem(flame));
